@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 242, 242, 247;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 242, 242, 247;
+    --background-rgb: 28, 28, 30;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+}
+
+/* Custom classes for the app */
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white px-4 py-2 rounded-full font-medium shadow-md hover:opacity-90 transition-opacity;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-white px-4 py-2 rounded-full font-medium shadow-md hover:opacity-90 transition-opacity;
+  }
+  
+  .recording-item {
+    @apply flex items-center p-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors;
+  }
+} 

@@ -1,0 +1,2 @@
+This is a placeholder for the Voice Recorder app screenshot. 
+In a real implementation, this would be replaced with an actual image showing the app interface with the recording screen in both light and dark modes. 
