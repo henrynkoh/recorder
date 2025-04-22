@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { FaMicrophone, FaList, FaUser, FaInfoCircle, FaCog } from 'react-icons/fa'
+import { FaMicrophone, FaList, FaUser, FaInfoCircle, FaCog, FaBookReader } from 'react-icons/fa'
 
 export default function Home() {
   return (
@@ -30,6 +30,18 @@ export default function Home() {
                 <div>
                   <h3 className="font-medium">New Recording</h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Start a new voice recording</p>
+                </div>
+              </div>
+            </Link>
+            
+            <Link href="/text-to-speech" className="recording-item block">
+              <div className="flex items-center">
+                <div className="bg-blue-500 bg-opacity-10 p-3 rounded-full mr-4">
+                  <FaBookReader className="text-blue-500 text-xl" />
+                </div>
+                <div>
+                  <h3 className="font-medium">Script Reader</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Convert text to natural-sounding speech</p>
                 </div>
               </div>
             </Link>

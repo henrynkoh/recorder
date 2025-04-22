@@ -46,6 +46,7 @@ export default function Header() {
           <nav className="hidden md:flex space-x-6">
             <NavLink href="/" label="Home" active={pathname === '/'} />
             <NavLink href="/record" label="Record" active={pathname === '/record'} />
+            <NavLink href="/text-to-speech" label="Script Reader" active={pathname === '/text-to-speech'} />
             <NavLink href="/recordings" label="My Recordings" active={pathname === '/recordings'} />
             <NavLink href="/settings" label="Settings" active={pathname === '/settings'} />
           </nav>
