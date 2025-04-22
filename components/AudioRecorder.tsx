@@ -18,8 +18,29 @@ export default function AudioRecorder({
   const [recordingTime, setRecordingTime] = useState(0)
   const [recordingName, setRecordingName] = useState('')
   
-  // Get audio quality setting
+  // Use integer levels instead of string quality settings for direct UI control
+  const [qualityLevel, setQualityLevel] = useState(3) // Default to level 3 (high)
+  
+  const qualitySettings = {
+    1: { label: 'Low', bitrate: 32000, description: 'Smallest size (32 kbps)' },
+    2: { label: 'Medium', bitrate: 96000, description: 'Balanced (96 kbps)' },
+    3: { label: 'High', bitrate: 128000, description: 'Better quality (128 kbps)' },
+    4: { label: 'Very High', bitrate: 192000, description: 'Best quality (192 kbps)' }
+  }
+  
+  // Get audio quality setting from global context (we'll still respect it for initial value)
   const { audioQuality } = useSettings()
+  
+  // Set initial quality level based on settings context
+  useEffect(() => {
+    switch(audioQuality) {
+      case 'low': setQualityLevel(1); break;
+      case 'medium': setQualityLevel(2); break;
+      case 'high': setQualityLevel(3); break;
+      case 'veryhigh': setQualityLevel(4); break;
+      default: setQualityLevel(3);
+    }
+  }, [audioQuality]);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -52,6 +73,11 @@ export default function AudioRecorder({
     }
   }, [recordingTime, onTimerUpdate])
   
+  // Handle quality level change
+  const handleQualityChange = (level: number) => {
+    setQualityLevel(level)
+  }
+  
   const startRecording = async () => {
     try {
       // Initialize default recording name
@@ -75,9 +101,9 @@ export default function AudioRecorder({
       })
       streamRef.current = stream
       
-      // Create media recorder with audio quality options
+      // Create media recorder with audio quality options based on selected level
       const options = {
-        audioBitsPerSecond: audioBitrates[audioQuality],
+        audioBitsPerSecond: qualitySettings[qualityLevel as keyof typeof qualitySettings].bitrate,
         mimeType: 'audio/webm'
       }
       
@@ -185,6 +211,37 @@ export default function AudioRecorder({
             onChange={handleNameChange}
             disabled={isRecording}
           />
+        </div>
+        
+        {/* Quality Selection */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            Audio Quality
+          </label>
+          <div className="grid grid-cols-4 gap-2">
+            {[1, 2, 3, 4].map(level => (
+              <button
+                key={level}
+                onClick={() => handleQualityChange(level)}
+                disabled={isRecording}
+                className={`p-3 border rounded-lg flex flex-col items-center text-center transition-colors
+                  ${qualityLevel === level 
+                    ? 'bg-secondary text-white border-secondary' 
+                    : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 hover:border-secondary dark:hover:border-secondary'
+                  }
+                  ${isRecording ? 'opacity-50 cursor-not-allowed' : ''}
+                `}
+              >
+                <span className="font-bold text-lg">{level}</span>
+                <span className={`font-medium ${qualityLevel === level ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                  {qualitySettings[level as keyof typeof qualitySettings].label}
+                </span>
+                <span className={`text-xs mt-1 ${qualityLevel === level ? 'text-white' : 'text-gray-500 dark:text-gray-400'}`}>
+                  {qualitySettings[level as keyof typeof qualitySettings].description}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
         
         <div className="flex justify-center mb-4">

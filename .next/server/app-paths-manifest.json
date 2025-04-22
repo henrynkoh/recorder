@@ -1,4 +1,6 @@
 {
-  "/recordings/page": "app/recordings/page.js",
-  "/record/page": "app/record/page.js"
+  "/page": "app/page.js",
+  "/record/page": "app/record/page.js",
+  "/settings/page": "app/settings/page.js",
+  "/recordings/page": "app/recordings/page.js"
 }
