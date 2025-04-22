@@ -194,39 +194,72 @@ export default function TextToSpeechPage() {
   
   const speakWithBrowserVoice = () => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      // Cancel any ongoing speech
-      window.speechSynthesis.cancel()
-      
-      // Create a new utterance - use either SSML-processed text or regular text
-      let utteranceText = useSSML ? text : processedText;
-      const utterance = new SpeechSynthesisUtterance(utteranceText)
-      utteranceRef.current = utterance
-      
-      // Set voice
-      if (selectedVoice) {
-        const voice = voices.find(v => v.name === selectedVoice)
-        if (voice) {
-          utterance.voice = voice
+      try {
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel()
+        
+        // Log available voices for debugging
+        console.log("Available voices:", voices);
+        console.log("Selected voice:", selectedVoice);
+        
+        // Create a new utterance - SSML doesn't work directly with the browser API,
+        // so we need to extract plain text from it
+        let utteranceText = text;
+        
+        // Process the text with natural pauses but without SSML tags
+        if (naturalPauses) {
+          // Add pauses by adding extra periods and commas instead of SSML
+          utteranceText = utteranceText.replace(/\./g, '... ');
+          utteranceText = utteranceText.replace(/,/g, ', ');
+          
+          // Add emphasis by repeating words instead of SSML
+          utteranceText = utteranceText.replace(/\*([^*]+)\*/g, '$1 $1');
         }
-      }
-      
-      // Set speech parameters
-      utterance.rate = rate
-      utterance.pitch = pitch
-      utterance.volume = volume
-      
-      // Start speaking
-      window.speechSynthesis.speak(utterance)
-      setIsSpeaking(true)
-      setIsPaused(false)
-      
-      // Handle speech end
-      utterance.onend = () => {
-        setIsSpeaking(false)
-        setIsPaused(false)
+        
+        console.log("Using text for speech:", utteranceText);
+        
+        const utterance = new SpeechSynthesisUtterance(utteranceText);
+        utteranceRef.current = utterance;
+        
+        // Set voice
+        if (selectedVoice) {
+          const voice = voices.find(v => v.name === selectedVoice);
+          if (voice) {
+            utterance.voice = voice;
+            console.log("Using voice:", voice.name);
+          } else {
+            console.warn("Selected voice not found:", selectedVoice);
+          }
+        }
+        
+        // Set speech parameters
+        utterance.rate = rate;
+        utterance.pitch = pitch;
+        utterance.volume = volume;
+        
+        // Add event listeners for debugging
+        utterance.onstart = () => console.log("Speech started");
+        utterance.onpause = () => console.log("Speech paused");
+        utterance.onresume = () => console.log("Speech resumed");
+        utterance.onend = () => {
+          console.log("Speech ended");
+          setIsSpeaking(false);
+          setIsPaused(false);
+        };
+        utterance.onerror = (event) => console.error("Speech error:", event);
+        
+        // Start speaking
+        console.log("Starting speech synthesis...");
+        window.speechSynthesis.speak(utterance);
+        setIsSpeaking(true);
+        setIsPaused(false);
+        
+      } catch (error: any) {
+        console.error("Error in speech synthesis:", error);
+        alert("Error with text-to-speech: " + (error.message || "Unknown error"));
       }
     } else {
-      alert('Your browser does not support text-to-speech functionality.')
+      alert('Your browser does not support text-to-speech functionality. Please try a different browser like Chrome or Edge.');
     }
   }
   
