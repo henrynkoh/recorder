@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import Header from '@/components/Header'
 
@@ -22,7 +22,10 @@ export default function TextToSpeechPage() {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([])
+  const [filteredVoices, setFilteredVoices] = useState<SpeechSynthesisVoice[]>([])
   const [selectedVoice, setSelectedVoice] = useState<string>('')
+  const [voiceFilter, setVoiceFilter] = useState('')
+  const [voiceLanguageFilter, setVoiceLanguageFilter] = useState('all')
   const [rate, setRate] = useState(0.9) // Slightly slower default for more natural sound
   const [pitch, setPitch] = useState(1)
   const [volume, setVolume] = useState(1)
@@ -89,6 +92,60 @@ export default function TextToSpeechPage() {
   
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
   
+  // Get a list of unique languages from available voices
+  const availableLanguages = useMemo(() => {
+    const languages = voices.map(voice => {
+      // Extract language code like "en-US" -> "English (US)"
+      const langCode = voice.lang;
+      const langName = new Intl.DisplayNames([navigator.language], { type: 'language' });
+      try {
+        // Try to get language name from browser
+        const mainLang = langCode.split('-')[0];
+        const displayName = langName.of(mainLang);
+        const region = langCode.includes('-') ? ` (${langCode.split('-')[1]})` : '';
+        return { 
+          code: langCode, 
+          name: displayName ? `${displayName}${region}` : langCode 
+        };
+      } catch (e) {
+        return { code: langCode, name: langCode };
+      }
+    });
+    
+    // Remove duplicates and sort
+    const uniqueLanguages = Array.from(new Set(languages.map(l => l.code)))
+      .map(code => languages.find(l => l.code === code))
+      .filter((lang): lang is { code: string, name: string } => lang !== undefined)
+      .sort((a, b) => a.name.localeCompare(b.name));
+    
+    // Add "All Languages" option
+    return [{ code: 'all', name: 'All Languages' }, ...uniqueLanguages];
+  }, [voices]);
+  
+  // Filter voices based on search term and language
+  useEffect(() => {
+    let result = [...voices];
+    
+    // Filter by language if not set to "all"
+    if (voiceLanguageFilter !== 'all') {
+      result = result.filter(voice => voice.lang === voiceLanguageFilter);
+    }
+    
+    // Filter by search term if present
+    if (voiceFilter.trim()) {
+      const searchTerm = voiceFilter.toLowerCase();
+      result = result.filter(voice => 
+        voice.name.toLowerCase().includes(searchTerm) || 
+        voice.lang.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    // Sort by name
+    result.sort((a, b) => a.name.localeCompare(b.name));
+    
+    setFilteredVoices(result);
+  }, [voices, voiceFilter, voiceLanguageFilter]);
+  
   // Load available voices when component mounts
   useEffect(() => {
     // Initialize speech synthesis
@@ -97,6 +154,7 @@ export default function TextToSpeechPage() {
       const loadVoices = () => {
         const availableVoices = window.speechSynthesis.getVoices()
         setVoices(availableVoices)
+        setFilteredVoices(availableVoices)
         
         // Set default voice (preferably a natural sounding one)
         if (availableVoices.length > 0) {
@@ -460,18 +518,59 @@ For now, we'll fall back to the browser's speech synthesis.`);
                   Voice
                 </label>
                 {selectedProvider === 'browser' ? (
-                  <select
-                    id="voice"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-secondary focus:border-secondary dark:bg-gray-800 dark:text-white"
-                    value={selectedVoice}
-                    onChange={(e) => setSelectedVoice(e.target.value)}
-                  >
-                    {voices.map((voice) => (
-                      <option key={voice.name} value={voice.name}>
-                        {voice.name} ({voice.lang})
-                      </option>
-                    ))}
-                  </select>
+                  <div>
+                    {/* Voice filter and language filter */}
+                    <div className="mb-2 flex gap-2">
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          placeholder="Search voices..."
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-secondary focus:border-secondary dark:bg-gray-800 dark:text-white"
+                          value={voiceFilter}
+                          onChange={(e) => setVoiceFilter(e.target.value)}
+                        />
+                      </div>
+                      <select
+                        value={voiceLanguageFilter}
+                        onChange={(e) => setVoiceLanguageFilter(e.target.value)}
+                        className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-secondary focus:border-secondary dark:bg-gray-800 dark:text-white"
+                      >
+                        {availableLanguages.map((lang) => (
+                          <option key={lang.code} value={lang.code}>
+                            {lang.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Voice selection dropdown */}
+                    <select
+                      id="voice"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-secondary focus:border-secondary dark:bg-gray-800 dark:text-white"
+                      value={selectedVoice}
+                      onChange={(e) => setSelectedVoice(e.target.value)}
+                    >
+                      {filteredVoices.length > 0 ? (
+                        filteredVoices.map((voice) => (
+                          <option key={voice.name} value={voice.name}>
+                            {voice.name} ({voice.lang}) {voice.localService ? '(Local)' : ''}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="">No voices match your filters</option>
+                      )}
+                    </select>
+                    
+                    {filteredVoices.length === 0 && (
+                      <p className="text-yellow-500 dark:text-yellow-400 text-sm mt-1">
+                        No voices match your search. Try changing your filters.
+                      </p>
+                    )}
+                    
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {voices.length} voices available. Some voices may sound more natural than others.
+                    </p>
+                  </div>
                 ) : (
                   <select
                     id="premium-voice"

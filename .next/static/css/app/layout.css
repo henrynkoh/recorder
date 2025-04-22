@@ -1504,6 +1504,10 @@ body {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity, 1));
 }
+.dark\:text-yellow-400:is(.dark *) {
+  --tw-text-opacity: 1;
+  color: rgb(250 204 21 / var(--tw-text-opacity, 1));
+}
 .dark\:hover\:border-secondary:hover:is(.dark *) {
   --tw-border-opacity: 1;
   border-color: rgb(0 122 255 / var(--tw-border-opacity, 1));

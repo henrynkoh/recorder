@@ -1,7 +1,7 @@
 {
   "/page": "app/page.js",
-  "/record/page": "app/record/page.js",
   "/recordings/page": "app/recordings/page.js",
-  "/settings/page": "app/settings/page.js",
-  "/text-to-speech/page": "app/text-to-speech/page.js"
+  "/record/page": "app/record/page.js",
+  "/text-to-speech/page": "app/text-to-speech/page.js",
+  "/settings/page": "app/settings/page.js"
 }
