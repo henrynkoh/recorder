@@ -1,14 +1,13 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import Header from '@/components/Header'
 import { useTheme } from '@/app/context/ThemeContext'
+import { useSettings, AudioQuality } from '@/app/context/SettingsContext'
 
 export default function SettingsPage() {
-  const [audioQuality, setAudioQuality] = useState('high')
-  const [autoSave, setAutoSave] = useState(true)
-  const [language, setLanguage] = useState('english')
+  // Use the settings context instead of local state
+  const { audioQuality, setAudioQuality, autoSave, setAutoSave, language, setLanguage } = useSettings()
   
   // Use the theme context
   const { theme, toggleTheme } = useTheme()
@@ -39,7 +38,7 @@ export default function SettingsPage() {
                     id="audioQuality"
                     className="w-full border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 dark:bg-gray-800"
                     value={audioQuality}
-                    onChange={e => setAudioQuality(e.target.value)}
+                    onChange={e => setAudioQuality(e.target.value as AudioQuality)}
                   >
                     <option value="low">Low (32 kbps)</option>
                     <option value="medium">Medium (96 kbps)</option>
@@ -119,14 +118,6 @@ export default function SettingsPage() {
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   Used storage: 128 MB
                 </p>
-              </div>
-              
-              {/* Account */}
-              <div>
-                <h3 className="text-lg font-medium mb-2">Account</h3>
-                <button className="bg-red-100 text-red-600 dark:bg-red-900 dark:bg-opacity-30 dark:text-red-400 px-4 py-2 rounded-md hover:bg-red-200 dark:hover:bg-red-800 transition-colors">
-                  Sign Out
-                </button>
               </div>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { format } from 'date-fns'
+import { useSettings, audioBitrates } from '@/app/context/SettingsContext'
 
 type AudioRecorderProps = {
   onRecordingComplete: (blob: Blob) => void
@@ -16,6 +17,9 @@ export default function AudioRecorder({
   const [isPaused, setIsPaused] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
   const [recordingName, setRecordingName] = useState('')
+  
+  // Get audio quality setting
+  const { audioQuality } = useSettings()
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -58,11 +62,26 @@ export default function AudioRecorder({
       setRecordingTime(0)
       
       // Request microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          // Apply audio quality settings
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          // Set the bitrate based on quality selection
+          channelCount: 1,
+          sampleRate: 44100,
+        } 
+      })
       streamRef.current = stream
       
-      // Create media recorder
-      const mediaRecorder = new MediaRecorder(stream)
+      // Create media recorder with audio quality options
+      const options = {
+        audioBitsPerSecond: audioBitrates[audioQuality],
+        mimeType: 'audio/webm'
+      }
+      
+      const mediaRecorder = new MediaRecorder(stream, options)
       mediaRecorderRef.current = mediaRecorder
       
       // Reset chunks
@@ -76,7 +95,8 @@ export default function AudioRecorder({
       }
       
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/wav' })
+        // Create blob with appropriate audio type and higher quality
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
         
         // Pass the blob with actual recorded duration in seconds
         onRecordingComplete(blob)
